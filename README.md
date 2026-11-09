@@ -23,9 +23,10 @@ npm run build      # production: type-check + build published puzzles only
 1. Copy a file in `src/content/expressions/` and edit the frontmatter. The schema (`src/content.config.ts`) fails the build on missing fields, fewer than 2 related expressions, no sources, or two puzzles on one date.
 2. New languages/themes go in `src/data/languages.json` / `themes.json`.
 3. Illustration: put the image next to the file and add `illustration: ./name.jpg` (optional; a labelled emoji plate is the fallback). `illustrationAlt` is always required.
-4. The markdown body is the editorial "one feeling, different metaphors" paragraph.
-5. Preview it with `npm run dev` at `/p/<date>/`.
-6. Verify it (below), then set `status: verified`, and `published` when it's ready to go live.
+4. `related` doubles as the clue ladder: each wrong guess reveals the next one's `literal` (or `phrase` if it has none, as for English). Order them hardest first and put the giveaway last.
+5. The markdown body is the editorial "one feeling, different metaphors" paragraph.
+6. Preview it with `npm run dev` at `/p/<date>/`.
+7. Verify it (below), then set `status: verified`, and `published` when it's ready to go live.
 
 ### Verification checklist (PRD 7.3)
 
