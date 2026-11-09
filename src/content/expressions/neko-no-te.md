@@ -1,6 +1,6 @@
 ---
-date: 2026-11-11
-status: draft
+date: 2026-11-09
+status: published
 emoji: 🐈
 phrase: 猫の手も借りたい (neko no te mo karitai)
 language: japanese
@@ -18,14 +18,15 @@ example:
 theme: work
 illustrationAlt: A frantic office worker at a desk piled with paper, handing a pen to a puzzled cat.
 related:
-  - language: English
-    phrase: Up to my neck
-    meaning: Overwhelmed with work.
   - language: German
     phrase: Viel um die Ohren haben
     literal: To have a lot around the ears.
     meaning: To be very busy.
+  - language: English
+    phrase: Up to my neck
+    meaning: Overwhelmed with work.
 sources:
   - https://en.wiktionary.org/wiki/猫の手も借りたい
 ---
+
 English and German measure busyness by how much of you is buried: up to your neck, piled around your ears. Japanese measures it by desperation, so busy that even a cat, the least helpful coworker imaginable, would be welcome.

@@ -38,46 +38,59 @@ const edition = String(puzzle.edition).padStart(3, '0');
     <Illustration image={data.illustration} alt={data.illustrationAlt} emoji={data.emoji} />
 
     <h1 class="literal">“{data.literal}”</h1>
-    <p class="prompt">An idiom, translated word for word. What does it really mean, and where is it from?</p>
+    <p class="prompt">
+      An idiom, translated word for word. What does it really mean? Each wrong guess shows you how another language says
+      the same thing.
+    </p>
 
-    <form class="guess">
-      <fieldset>
-        <legend>What does it mean?</legend>
+    <ol class="clues">
+      {
+        data.related.map((r, i) => (
+          <li class="clue" data-clue tabindex="-1" hidden>
+            <span class="related-lang">Clue {i + 2} · In {r.language}</span>
+            <span class="clue-text">“{r.literal ?? r.phrase}”</span>
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="guess">
+      <div class="choices" role="group" aria-labelledby="meaning-heading">
+        <h2 id="meaning-heading" class="legend">What does it mean?</h2>
         {
           meanings.map((m) => (
-            <label class="choice">
-              <input type="radio" name="meaning" value={m} required />
+            <button class="choice" type="button" value={m} data-meaning-choice>
               <span class="choice-text">{m}</span>
               <span class="mark" />
-            </label>
+            </button>
           ))
         }
-      </fieldset>
-      <fieldset>
-        <legend>Which language is it from?</legend>
+      </div>
+      <p class="muted" data-guess-status role="status"></p>
+
+      <div class="choices" role="group" aria-labelledby="language-heading" data-language-group hidden>
+        <h2 id="language-heading" class="legend" tabindex="-1">Bonus: which language is the first one from?</h2>
         {
           languages.map((l) => (
-            <label class="choice">
-              <input type="radio" name="language" value={l} required />
+            <button class="choice" type="button" value={l} data-language-choice>
               <span class="choice-text">{l}</span>
               <span class="mark" />
-            </label>
+            </button>
           ))
         }
-      </fieldset>
-      <button class="button" type="submit" disabled>Submit answers</button>
+      </div>
       <p class="notice" data-storage-note hidden>
         This browser isn't saving progress, so your answers and streak will be lost when you leave.
       </p>
-    </form>
+    </div>
 
     <section class="results" data-results hidden aria-labelledby="results-heading">
       <h2 id="results-heading" tabindex="-1">Your result</h2>
+      <p class="score" data-score></p>
       <ul class="result-lines">
         <li data-result="meaning"></li>
         <li data-result="language"></li>
       </ul>
-      <p class="score"><span data-score></span><span class="muted"> / 5</span></p>
       <p class="streak" data-streak></p>
       <button class="button secondary" type="button" data-share>Share result</button>
       <p class="muted" data-share-status role="status"></p>
@@ -86,18 +99,6 @@ const edition = String(puzzle.edition).padStart(3, '0');
     <section class="reveal" data-reveal hidden aria-labelledby="reveal-heading">
       <p class="kicker">The expression</p>
       <h2 id="reveal-heading" class="phrase" lang={lang.code}>{data.phrase}</h2>
-      <dl class="facts">
-        <div><dt>Language</dt><dd>{lang.name}{data.region && ` · ${data.region}`}</dd></div>
-        <div><dt>Literally</dt><dd>“{data.literal}”</dd></div>
-        <div><dt>Meaning</dt><dd>{data.meaning}</dd></div>
-        <div><dt>Usage</dt><dd>{data.usage}</dd></div>
-        {theme && <div><dt>Theme</dt><dd>{theme.name}</dd></div>}
-      </dl>
-      <blockquote class="example">
-        <p lang={lang.code}>{data.example.original}</p>
-        <p class="muted">{data.example.translation}</p>
-      </blockquote>
-
       <h3 class="kicker">One feeling, different metaphors</h3>
       <ul class="related">
         <li>
@@ -118,6 +119,19 @@ const edition = String(puzzle.edition).padStart(3, '0');
       </ul>
       <div class="editorial"><Content /></div>
 
+      <h3 class="kicker">The details</h3>
+      <dl class="facts">
+        <div><dt>Language</dt><dd>{lang.name}{data.region && ` · ${data.region}`}</dd></div>
+        <div><dt>Literally</dt><dd>“{data.literal}”</dd></div>
+        <div><dt>Meaning</dt><dd>{data.meaning}</dd></div>
+        <div><dt>Usage</dt><dd>{data.usage}</dd></div>
+        {theme && <div><dt>Theme</dt><dd>{theme.name}</dd></div>}
+      </dl>
+      <blockquote class="example">
+        <p lang={lang.code}>{data.example.original}</p>
+        <p class="muted">{data.example.translation}</p>
+      </blockquote>
+
       <details class="sources">
         <summary>Sources</summary>
         <ul>{data.sources.map((s) => <li><a href={s} rel="noopener">{s}</a></li>)}</ul>
@@ -127,34 +141,68 @@ const edition = String(puzzle.edition).padStart(3, '0');
 </Base>
 
 <script>
-  import { load, save, score, shareText, streakDates, streaks, type PuzzleRecord } from '../../lib/progress';
+  import { ladder, load, save, shareText, streakDates, streaks, type PuzzleRecord } from '../../lib/progress';
 
   const root = document.querySelector<HTMLElement>('[data-puzzle]')!;
   const d = root.dataset as Record<string, string>;
-  const form = root.querySelector('form')!;
-  const submit = form.querySelector('button')!;
   const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+  const $$ = <T extends HTMLElement>(sel: string) => [...root.querySelectorAll<T>(sel)];
+  const meaningChoices = $$<HTMLButtonElement>('[data-meaning-choice]');
+  const languageChoices = $$<HTMLButtonElement>('[data-language-choice]');
+  const clues = $$('[data-clue]');
+  const totalClues = clues.length + 1; // the headline is clue 1
+  let guesses: string[] = [];
 
   const progress = load();
   if (!progress) $('[data-storage-note]').hidden = false;
 
-  function show(r: PuzzleRecord, focus: boolean) {
-    for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
-      const correct = input.value === (input.name === 'meaning' ? d.meaning : d.language);
-      const chosen = input.value === (input.name === 'meaning' ? r.selectedMeaning : r.selectedLanguage);
-      input.checked = chosen;
-      const label = input.closest('label')!;
-      label.classList.toggle('correct', correct);
-      label.classList.toggle('wrong', chosen && !correct);
-      // Text, not just colour, says which is which
-      label.querySelector('.mark')!.textContent = correct ? (chosen ? '✓ Your answer' : '✓ Answer') : chosen ? '✗ Your answer' : '';
+  // Text, not just colour, says which is which
+  function paint(buttons: HTMLButtonElement[], answer: string, chosen: string[], done: boolean) {
+    for (const b of buttons) {
+      const correct = b.value === answer;
+      const picked = chosen.includes(b.value);
+      b.disabled = done || picked;
+      b.classList.toggle('correct', correct && (picked || done));
+      b.classList.toggle('wrong', picked && !correct);
+      b.querySelector('.mark')!.textContent =
+        correct && picked ? '✓ Your answer' : correct && done ? '✓ Answer' : picked ? '✗ Your answer' : '';
     }
-    form.querySelectorAll('fieldset').forEach((f) => (f.disabled = true));
-    submit.hidden = true;
+  }
 
-    $('[data-result="meaning"]').textContent = r.meaningCorrect ? '✓ Meaning: correct' : `✗ Meaning: it means “${d.meaning}”`;
+  const solved = () => guesses.at(-1) === d.meaning;
+  const meaningDone = () => solved() || guesses.length >= totalClues;
+
+  function guessMeaning(value: string) {
+    guesses.push(value);
+    const done = meaningDone();
+    paint(meaningChoices, d.meaning, guesses, done);
+    const status = $('[data-guess-status]');
+    if (!done) {
+      const next = clues[guesses.length - 1];
+      next.hidden = false;
+      next.focus();
+      status.textContent = 'Not quite. Here’s how another language says it.';
+      return;
+    }
+    clues.forEach((c) => (c.hidden = false));
+    status.textContent = solved() ? `Got it on clue ${guesses.length}.` : `Out of clues. It means “${d.meaning}”`;
+    $('[data-language-group]').hidden = false;
+    $('#language-heading').focus();
+  }
+
+  function show(r: PuzzleRecord, focus: boolean) {
+    guesses = r.guesses;
+    paint(meaningChoices, d.meaning, r.guesses, true);
+    paint(languageChoices, d.language, [r.selectedLanguage], true);
+    clues.forEach((c) => (c.hidden = false));
+    $('[data-guess-status]').textContent = '';
+    $('[data-language-group]').hidden = false;
+
+    $('[data-score]').textContent = ladder(r);
+    $('[data-result="meaning"]').textContent = r.solved
+      ? `✓ Meaning: got it on clue ${r.guesses.length} of ${totalClues}`
+      : `✗ Meaning: it means “${d.meaning}”`;
     $('[data-result="language"]').textContent = r.languageCorrect ? '✓ Language: correct' : `✗ Language: it's ${d.language}`;
-    $('[data-score]').textContent = String(r.score);
     const saved = load();
     if (saved) {
       const s = streaks(streakDates(saved));
@@ -184,31 +232,22 @@ const edition = String(puzzle.edition).padStart(3, '0');
     }
   }
 
+  // shortcut: a half-finished ladder isn't saved, so reloading mid-puzzle starts over; save partial guesses if players abuse it
   if (progress?.[d.date]) show(progress[d.date], false);
 
-  form.addEventListener('change', () => {
-    const f = new FormData(form);
-    submit.disabled = !(f.get('meaning') && f.get('language'));
-  });
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    if (submit.hidden) return; // already answered
-    const f = new FormData(form);
-    const selectedMeaning = String(f.get('meaning'));
-    const selectedLanguage = String(f.get('language'));
-    const meaningCorrect = selectedMeaning === d.meaning;
-    const languageCorrect = selectedLanguage === d.language;
-    const rec: PuzzleRecord = {
-      expressionId: d.id,
-      selectedMeaning,
-      selectedLanguage,
-      meaningCorrect,
-      languageCorrect,
-      score: score(meaningCorrect, languageCorrect),
-      completedAt: new Date().toISOString(),
-    };
-    // If another tab already answered, its record wins
-    show(save(d.date, rec) ?? rec, true);
-  });
+  for (const b of meaningChoices) b.addEventListener('click', () => guessMeaning(b.value));
+  for (const b of languageChoices)
+    b.addEventListener('click', () => {
+      if (!meaningDone()) return;
+      const rec: PuzzleRecord = {
+        expressionId: d.id,
+        guesses,
+        solved: solved(),
+        selectedLanguage: b.value,
+        languageCorrect: b.value === d.language,
+        completedAt: new Date().toISOString(),
+      };
+      // If another tab already answered, its record wins
+      show(save(d.date, rec) ?? rec, true);
+    });
 </script>

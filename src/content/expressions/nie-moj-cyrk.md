@@ -1,5 +1,5 @@
 ---
-date: 2026-11-09
+date: 2026-11-11
 status: published
 emoji: 🐒
 phrase: Nie mój cyrk, nie moje małpy

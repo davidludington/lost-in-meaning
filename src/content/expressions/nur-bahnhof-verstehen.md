@@ -18,12 +18,12 @@ example:
 theme: confusion
 illustrationAlt: A puzzled person surrounded by speech bubbles, all containing the same railway station sign.
 related:
-  - language: English
-    phrase: It's all Greek to me
-    meaning: I can't understand it.
   - language: Spanish
     phrase: Me suena a chino
     literal: It sounds like Chinese to me.
+    meaning: I can't understand it.
+  - language: English
+    phrase: It's all Greek to me
     meaning: I can't understand it.
 sources:
   - https://en.wiktionary.org/wiki/nur_Bahnhof_verstehen

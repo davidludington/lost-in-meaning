@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { load, save, score, streakDates, streaks, shareText, type PuzzleRecord } from './progress.ts';
+import { ladder, load, save, streakDates, streaks, shareText, type PuzzleRecord } from './progress.ts';
 
 const rec = (over: Partial<PuzzleRecord> = {}): PuzzleRecord => ({
-  expressionId: 'x', selectedMeaning: 'm', selectedLanguage: 'l',
-  meaningCorrect: true, languageCorrect: false, score: 2,
+  expressionId: 'x', guesses: ['m'], solved: true, selectedLanguage: 'l', languageCorrect: false,
   completedAt: '2026-11-09T15:00:00Z', ...over,
 });
 
@@ -13,11 +12,10 @@ function memory(): Storage {
   return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v) } as Storage;
 }
 
-test('score', () => {
-  assert.equal(score(true, true), 5);
-  assert.equal(score(true, false), 2);
-  assert.equal(score(false, true), 2);
-  assert.equal(score(false, false), 0);
+test('ladder', () => {
+  assert.equal(ladder(rec()), '🟩');
+  assert.equal(ladder(rec({ guesses: ['a', 'b', 'm'] })), '🟥🟥🟩');
+  assert.equal(ladder(rec({ guesses: ['a', 'b', 'c'], solved: false })), '🟥🟥🟥');
 });
 
 test('streaks: consecutive, gaps, duplicates, longest', () => {
@@ -44,9 +42,9 @@ test('streakDates: late archive plays do not count, just-after-midnight does', (
 test('save is once per date and survives reload', () => {
   const s = memory();
   assert.deepEqual(load(s), {});
-  assert.equal(save('2026-11-09', rec(), s)?.selectedMeaning, 'm');
-  assert.equal(save('2026-11-09', rec({ selectedMeaning: 'other' }), s)?.selectedMeaning, 'm');
-  assert.equal(load(s)?.['2026-11-09'].selectedMeaning, 'm');
+  assert.equal(save('2026-11-09', rec(), s)?.selectedLanguage, 'l');
+  assert.equal(save('2026-11-09', rec({ selectedLanguage: 'other' }), s)?.selectedLanguage, 'l');
+  assert.equal(load(s)?.['2026-11-09'].selectedLanguage, 'l');
 });
 
 test('unavailable or corrupt storage does not throw', () => {
@@ -54,15 +52,14 @@ test('unavailable or corrupt storage does not throw', () => {
   assert.equal(load(throwing), null);
   assert.equal(save('2026-11-09', rec(), throwing), null);
   const corrupt = memory();
-  corrupt.setItem('lim:v1', '{not json');
+  corrupt.setItem('lim:v2', '{not json');
   assert.equal(load(corrupt), null);
   assert.equal(load(null), null);
 });
 
 test('share text hides the answer', () => {
-  const text = shareText(14, '🪳', 'To have the cockroach.', rec({ meaningCorrect: true, languageCorrect: true, score: 5 }), 'https://x.test');
+  const text = shareText(14, '🪳', 'To have the cockroach.', rec({ guesses: ['a', 'm'], languageCorrect: true }), 'https://x.test');
   assert.match(text, /^Lost in Meaning #014/);
-  assert.match(text, /Meaning: ✓\nLanguage: ✓/);
-  assert.match(text, /Score: 5\/5/);
+  assert.match(text, /Meaning: 🟥🟩 on clue 2\nLanguage: ✓/);
   assert.doesNotMatch(text, /cafard|French/);
 });

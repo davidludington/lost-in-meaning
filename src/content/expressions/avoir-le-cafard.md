@@ -18,13 +18,13 @@ example:
 theme: emotions
 illustrationAlt: A small cockroach sitting on a person's shoulder under a grey raincloud.
 related:
-  - language: English
-    phrase: Feeling blue
-    meaning: Feeling sad.
   - language: German
     phrase: Trübsal blasen
     literal: To blow gloom.
     meaning: To mope.
+  - language: English
+    phrase: Feeling blue
+    meaning: Feeling sad.
 sources:
   - https://en.wiktionary.org/wiki/avoir_le_cafard
 ---

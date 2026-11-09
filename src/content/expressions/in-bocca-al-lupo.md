@@ -18,13 +18,13 @@ example:
 theme: luck
 illustrationAlt: A tiny traveller with a backpack standing at the open jaws of a friendly-looking wolf.
 related:
-  - language: English
-    phrase: Break a leg
-    meaning: Good luck (especially before a performance).
   - language: German
     phrase: Hals- und Beinbruch
     literal: Neck and leg break.
     meaning: Good luck.
+  - language: English
+    phrase: Break a leg
+    meaning: Good luck (especially before a performance).
 sources:
   - https://en.wiktionary.org/wiki/in_bocca_al_lupo
 ---

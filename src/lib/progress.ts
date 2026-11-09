@@ -3,19 +3,19 @@ import { addDays, today } from './day.ts';
 
 export type PuzzleRecord = {
   expressionId: string;
-  selectedMeaning: string;
+  guesses: string[]; // meanings in the order guessed; each wrong one revealed another clue
+  solved: boolean;
   selectedLanguage: string;
-  meaningCorrect: boolean;
   languageCorrect: boolean;
-  score: number;
   completedAt: string; // ISO timestamp
 };
 export type Progress = Record<string, PuzzleRecord>; // keyed by puzzle date
 
-const KEY = 'lim:v1';
+const KEY = 'lim:v2'; // v1 records had a different shape
 
-export const score = (meaningOk: boolean, languageOk: boolean) =>
-  (meaningOk ? 2 : 0) + (languageOk ? 2 : 0) + (meaningOk && languageOk ? 1 : 0);
+/** One square per guess: 🟥 wrong, 🟩 the correct one. */
+export const ladder = (r: PuzzleRecord) =>
+  r.guesses.map((_, i) => (r.solved && i === r.guesses.length - 1 ? '🟩' : '🟥')).join('');
 
 function storage(): Storage | null {
   try {
@@ -74,10 +74,8 @@ export const shareText = (edition: number, emoji: string, literal: string, r: Pu
     '',
     `${emoji} ${literal}`,
     '',
-    `Meaning: ${r.meaningCorrect ? '✓' : '✗'}`,
+    `Meaning: ${ladder(r)} ${r.solved ? `on clue ${r.guesses.length}` : 'lost in translation'}`,
     `Language: ${r.languageCorrect ? '✓' : '✗'}`,
-    '',
-    `Score: ${r.score}/5`,
     '',
     'Language is stranger than you think.',
     url,
