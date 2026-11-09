@@ -1,0 +1,45 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ExpressionCard from '../components/ExpressionCard.astro';
+import { getPuzzles } from '../lib/puzzles';
+
+const puzzles = (await getPuzzles()).reverse();
+const themes = (await getCollection('themes'))
+  .map((t) => ({ ...t.data, puzzles: puzzles.filter((p) => p.data.theme.id === t.id) }))
+  .filter((t) => t.puzzles.length);
+---
+
+<Base title="Collection">
+  <h1 class="page-title">Your collection</h1>
+  <p class="muted">Every expression you've discovered, gathered into your own strange dictionary.</p>
+
+  <p class="empty" data-empty>Nothing here yet. <a href="/">Play today's puzzle</a> to find your first expression.</p>
+
+  {
+    themes.map((t) => (
+      <section class="theme" data-theme hidden>
+        <h2>{t.name}</h2>
+        <p class="muted">{t.description}</p>
+        <ul class="cards">
+          {t.puzzles.map((p) => (
+            <ExpressionCard puzzle={p} />
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+</Base>
+
+<script>
+  import { load } from '../lib/progress';
+
+  const done = load() ?? {};
+  for (const card of document.querySelectorAll<HTMLElement>('[data-date]')) card.hidden = !done[card.dataset.date!];
+  let any = false;
+  for (const section of document.querySelectorAll<HTMLElement>('[data-theme]')) {
+    section.hidden = !section.querySelector('[data-date]:not([hidden])');
+    any ||= !section.hidden;
+  }
+  document.querySelector<HTMLElement>('[data-empty]')!.hidden = any;
+</script>

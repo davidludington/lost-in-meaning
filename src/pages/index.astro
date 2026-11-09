@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import { getPuzzles } from '../lib/puzzles';
+
+const dates = (await getPuzzles()).map((p) => p.data.date);
+---
+
+<Base>
+  <section class="center" data-dates={JSON.stringify(dates)}>
+    {
+      dates.length ? (
+        <>
+          <p class="muted">Finding today's expression…</p>
+          <noscript>
+            <a href={`/p/${dates.at(-1)}/`}>Open the latest puzzle</a>
+          </noscript>
+        </>
+      ) : (
+        <p class="muted">No puzzle has been published yet. Come back soon.</p>
+      )
+    }
+  </section>
+</Base>
+
+<script>
+  import { today } from '../lib/day';
+
+  const dates: string[] = JSON.parse(document.querySelector<HTMLElement>('[data-dates]')!.dataset.dates!);
+  // Latest puzzle not after today, so a missed rebuild serves yesterday's instead of a 404
+  const target = dates.filter((d) => d <= today()).at(-1) ?? dates[0];
+  if (target) location.replace(`/p/${target}/`);
+</script>

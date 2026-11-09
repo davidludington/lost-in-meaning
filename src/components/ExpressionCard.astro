@@ -1,0 +1,20 @@
+---
+import Illustration from './Illustration.astro';
+import { languageName, type Puzzle } from '../lib/puzzles';
+
+interface Props {
+  puzzle: Puzzle;
+}
+const { puzzle } = Astro.props;
+const { data } = puzzle;
+const lang = await languageName(data.language);
+---
+
+<li class="card" data-date={data.date} hidden>
+  <a href={`/p/${data.date}/`}>
+    <Illustration image={data.illustration} alt={data.illustrationAlt} emoji={data.emoji} small />
+    <span class="card-phrase" lang={lang.code}>{data.phrase}</span>
+    <span class="card-literal">“{data.literal}”</span>
+    <span class="card-lang">{lang.name}</span>
+  </a>
+</li>

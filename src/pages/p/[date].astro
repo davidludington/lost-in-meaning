@@ -1,0 +1,214 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Illustration from '../../components/Illustration.astro';
+import { formatDate, getPuzzles, languageName, shuffle, type Puzzle } from '../../lib/puzzles';
+
+export async function getStaticPaths() {
+  return (await getPuzzles()).map((puzzle) => ({ params: { date: puzzle.data.date }, props: { puzzle } }));
+}
+
+const { puzzle } = Astro.props as { puzzle: Puzzle };
+const { data } = puzzle;
+const lang = await languageName(data.language);
+const wrongLangs = await Promise.all(data.wrongLanguages.map(languageName));
+const theme = (await getEntry('themes', data.theme.id))?.data;
+const { Content } = await render(puzzle);
+
+const meanings = shuffle([data.meaning, ...data.wrongMeanings], data.date);
+const languages = shuffle([lang.name, ...wrongLangs.map((l) => l.name)], data.date);
+const edition = String(puzzle.edition).padStart(3, '0');
+---
+
+<Base title={`No. ${edition}`}>
+  <!-- shortcut: answers ship in data- attributes, so a curious player can read them in the source; move grading server-side if that matters -->
+  <article
+    class="puzzle"
+    data-puzzle
+    data-date={data.date}
+    data-id={puzzle.id}
+    data-meaning={data.meaning}
+    data-language={lang.name}
+    data-edition={puzzle.edition}
+    data-emoji={data.emoji}
+    data-literal={data.literal}
+  >
+    <p class="edition">No. {edition} · <time datetime={data.date}>{formatDate(data.date)}</time></p>
+
+    <Illustration image={data.illustration} alt={data.illustrationAlt} emoji={data.emoji} />
+
+    <h1 class="literal">“{data.literal}”</h1>
+    <p class="prompt">An idiom, translated word for word. What does it really mean, and where is it from?</p>
+
+    <form class="guess">
+      <fieldset>
+        <legend>What does it mean?</legend>
+        {
+          meanings.map((m) => (
+            <label class="choice">
+              <input type="radio" name="meaning" value={m} required />
+              <span class="choice-text">{m}</span>
+              <span class="mark" />
+            </label>
+          ))
+        }
+      </fieldset>
+      <fieldset>
+        <legend>Which language is it from?</legend>
+        {
+          languages.map((l) => (
+            <label class="choice">
+              <input type="radio" name="language" value={l} required />
+              <span class="choice-text">{l}</span>
+              <span class="mark" />
+            </label>
+          ))
+        }
+      </fieldset>
+      <button class="button" type="submit" disabled>Submit answers</button>
+      <p class="notice" data-storage-note hidden>
+        This browser isn't saving progress, so your answers and streak will be lost when you leave.
+      </p>
+    </form>
+
+    <section class="results" data-results hidden aria-labelledby="results-heading">
+      <h2 id="results-heading" tabindex="-1">Your result</h2>
+      <ul class="result-lines">
+        <li data-result="meaning"></li>
+        <li data-result="language"></li>
+      </ul>
+      <p class="score"><span data-score></span><span class="muted"> / 5</span></p>
+      <p class="streak" data-streak></p>
+      <button class="button secondary" type="button" data-share>Share result</button>
+      <p class="muted" data-share-status role="status"></p>
+    </section>
+
+    <section class="reveal" data-reveal hidden aria-labelledby="reveal-heading">
+      <p class="kicker">The expression</p>
+      <h2 id="reveal-heading" class="phrase" lang={lang.code}>{data.phrase}</h2>
+      <dl class="facts">
+        <div><dt>Language</dt><dd>{lang.name}{data.region && ` · ${data.region}`}</dd></div>
+        <div><dt>Literally</dt><dd>“{data.literal}”</dd></div>
+        <div><dt>Meaning</dt><dd>{data.meaning}</dd></div>
+        <div><dt>Usage</dt><dd>{data.usage}</dd></div>
+        {theme && <div><dt>Theme</dt><dd>{theme.name}</dd></div>}
+      </dl>
+      <blockquote class="example">
+        <p lang={lang.code}>{data.example.original}</p>
+        <p class="muted">{data.example.translation}</p>
+      </blockquote>
+
+      <h3 class="kicker">One feeling, different metaphors</h3>
+      <ul class="related">
+        <li>
+          <span class="related-lang">{lang.name}</span>
+          <span class="related-phrase" lang={lang.code}>{data.phrase}</span>
+          <span class="muted">“{data.literal}”</span>
+        </li>
+        {
+          data.related.map((r) => (
+            <li>
+              <span class="related-lang">{r.language}</span>
+              <span class="related-phrase">{r.phrase}</span>
+              {r.literal && <span class="muted">“{r.literal}”</span>}
+              <span class="related-meaning">{r.meaning}</span>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="editorial"><Content /></div>
+
+      <details class="sources">
+        <summary>Sources</summary>
+        <ul>{data.sources.map((s) => <li><a href={s} rel="noopener">{s}</a></li>)}</ul>
+      </details>
+    </section>
+  </article>
+</Base>
+
+<script>
+  import { load, save, score, shareText, streakDates, streaks, type PuzzleRecord } from '../../lib/progress';
+
+  const root = document.querySelector<HTMLElement>('[data-puzzle]')!;
+  const d = root.dataset as Record<string, string>;
+  const form = root.querySelector('form')!;
+  const submit = form.querySelector('button')!;
+  const $ = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+
+  const progress = load();
+  if (!progress) $('[data-storage-note]').hidden = false;
+
+  function show(r: PuzzleRecord, focus: boolean) {
+    for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
+      const correct = input.value === (input.name === 'meaning' ? d.meaning : d.language);
+      const chosen = input.value === (input.name === 'meaning' ? r.selectedMeaning : r.selectedLanguage);
+      input.checked = chosen;
+      const label = input.closest('label')!;
+      label.classList.toggle('correct', correct);
+      label.classList.toggle('wrong', chosen && !correct);
+      // Text, not just colour, says which is which
+      label.querySelector('.mark')!.textContent = correct ? (chosen ? '✓ Your answer' : '✓ Answer') : chosen ? '✗ Your answer' : '';
+    }
+    form.querySelectorAll('fieldset').forEach((f) => (f.disabled = true));
+    submit.hidden = true;
+
+    $('[data-result="meaning"]').textContent = r.meaningCorrect ? '✓ Meaning: correct' : `✗ Meaning: it means “${d.meaning}”`;
+    $('[data-result="language"]').textContent = r.languageCorrect ? '✓ Language: correct' : `✗ Language: it's ${d.language}`;
+    $('[data-score]').textContent = String(r.score);
+    const saved = load();
+    if (saved) {
+      const s = streaks(streakDates(saved));
+      $('[data-streak]').textContent = `Current streak: ${s.current} · Longest: ${s.longest}`;
+    }
+    $('[data-share]').onclick = () => share(r);
+    $('[data-results]').hidden = false;
+    $('[data-reveal]').hidden = false;
+    if (focus) $('#results-heading').focus();
+  }
+
+  async function share(r: PuzzleRecord) {
+    const text = shareText(Number(d.edition), d.emoji, d.literal, r, `${location.origin}/`);
+    const status = $('[data-share-status]');
+    if (navigator.share) {
+      try {
+        return await navigator.share({ text });
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = 'Copied to clipboard.';
+    } catch {
+      status.textContent = 'Couldn’t copy. Your browser blocked clipboard access.';
+    }
+  }
+
+  if (progress?.[d.date]) show(progress[d.date], false);
+
+  form.addEventListener('change', () => {
+    const f = new FormData(form);
+    submit.disabled = !(f.get('meaning') && f.get('language'));
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (submit.hidden) return; // already answered
+    const f = new FormData(form);
+    const selectedMeaning = String(f.get('meaning'));
+    const selectedLanguage = String(f.get('language'));
+    const meaningCorrect = selectedMeaning === d.meaning;
+    const languageCorrect = selectedLanguage === d.language;
+    const rec: PuzzleRecord = {
+      expressionId: d.id,
+      selectedMeaning,
+      selectedLanguage,
+      meaningCorrect,
+      languageCorrect,
+      score: score(meaningCorrect, languageCorrect),
+      completedAt: new Date().toISOString(),
+    };
+    // If another tab already answered, its record wins
+    show(save(d.date, rec) ?? rec, true);
+  });
+</script>

@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+const { title, description = 'A daily puzzle about how the world says the same things differently.' } = Astro.props;
+
+// Paste your Google Form's share link here; the footer link is hidden while it's empty
+const FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScjb0lii54hf7kejMw3CBwKP7Rp6HpzWmAHYwCwaAbCL2EGFw/viewform?usp=publish-editor';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title ? `${title} · Lost in Meaning` : 'Lost in Meaning'}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪳</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Inter:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="wordmark" href="/">Lost <em>in</em> Meaning</a>
+      <nav aria-label="Main">
+        <a href="/">Today</a>
+        <a href="/collection/">Collection</a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>Language is stranger than you think.</p>
+      {
+        FEEDBACK_URL && (
+          <p>
+            <a class="feedback" href={FEEDBACK_URL} target="_blank" rel="noopener">
+              Tell us what you think<span class="visually-hidden"> (opens in a new tab)</span>
+            </a>
+          </p>
+        )
+      }
+    </footer>
+  </body>
+</html>

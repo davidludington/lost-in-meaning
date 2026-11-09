@@ -1,0 +1,21 @@
+{
+  "name": "lost-in-meaning",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "test": "node --test src/lib/*.test.ts",
+    "test:e2e": "INCLUDE_DRAFTS=1 astro build && playwright test"
+  },
+  "dependencies": {
+    "astro": "^7.4.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24.19.2",
+    "typescript": "^6.0.3"
+  }
+}

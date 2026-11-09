@@ -1,0 +1,25 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  image?: ImageMetadata;
+  alt: string;
+  emoji: string;
+  small?: boolean;
+}
+const { image, alt, emoji, small } = Astro.props;
+---
+
+<figure class:list={['illustration', { small }]}>
+  {
+    image ? (
+      <Image src={image} alt={alt} widths={small ? [240, 480] : [400, 800, 1200]} sizes={small ? '240px' : '(max-width: 640px) 100vw, 640px'} />
+    ) : (
+      // Missing artwork falls back to a printed-plate card so the puzzle still works
+      <div class="plate" role="img" aria-label={alt}>
+        <span aria-hidden="true">{emoji}</span>
+      </div>
+    )
+  }
+</figure>

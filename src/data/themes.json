@@ -1,0 +1,8 @@
+[
+  { "id": "emotions", "name": "Emotions", "description": "How we say what we feel." },
+  { "id": "confusion", "name": "Mistakes and confusion", "description": "Getting lost, getting it wrong, not getting it at all." },
+  { "id": "relationships", "name": "Relationships", "description": "Love, friendship, family and everyone in between." },
+  { "id": "work", "name": "Work and laziness", "description": "Too busy, or not busy enough." },
+  { "id": "luck", "name": "Luck and coincidence", "description": "Fortune, superstition and wishing people well." },
+  { "id": "everyday", "name": "Everyday situations", "description": "The small moments every language has a word for." }
+]

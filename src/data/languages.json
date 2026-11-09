@@ -1,0 +1,19 @@
+[
+  { "id": "french", "name": "French", "code": "fr", "script": "Latin" },
+  { "id": "german", "name": "German", "code": "de", "script": "Latin" },
+  { "id": "italian", "name": "Italian", "code": "it", "script": "Latin" },
+  { "id": "spanish", "name": "Spanish", "code": "es", "script": "Latin" },
+  { "id": "portuguese", "name": "Portuguese", "code": "pt", "script": "Latin" },
+  { "id": "romanian", "name": "Romanian", "code": "ro", "script": "Latin" },
+  { "id": "dutch", "name": "Dutch", "code": "nl", "script": "Latin" },
+  { "id": "swedish", "name": "Swedish", "code": "sv", "script": "Latin" },
+  { "id": "danish", "name": "Danish", "code": "da", "script": "Latin" },
+  { "id": "polish", "name": "Polish", "code": "pl", "script": "Latin" },
+  { "id": "czech", "name": "Czech", "code": "cs", "script": "Latin" },
+  { "id": "hungarian", "name": "Hungarian", "code": "hu", "script": "Latin" },
+  { "id": "russian", "name": "Russian", "code": "ru", "script": "Cyrillic" },
+  { "id": "japanese", "name": "Japanese", "code": "ja", "script": "Japanese" },
+  { "id": "korean", "name": "Korean", "code": "ko", "script": "Hangul" },
+  { "id": "mandarin", "name": "Mandarin Chinese", "code": "zh", "script": "Han" },
+  { "id": "thai", "name": "Thai", "code": "th", "script": "Thai" }
+]

@@ -1,0 +1,12 @@
+# The build only includes puzzles dated up to tomorrow, so the site must rebuild daily.
+# Set DEPLOY_HOOK_URL (Vercel/Netlify/Cloudflare Pages build hook) in the repo's Actions secrets.
+name: Daily rebuild
+on:
+  schedule:
+    - cron: '0 4 * * *' # ~midnight New York; the +1 day buffer covers DST drift and late runs
+  workflow_dispatch:
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
