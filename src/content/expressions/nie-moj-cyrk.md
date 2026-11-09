@@ -1,6 +1,6 @@
 ---
 date: 2026-11-09
-status: draft
+status: published
 emoji: 🐒
 phrase: Nie mój cyrk, nie moje małpy
 language: polish
@@ -29,4 +29,5 @@ related:
 sources:
   - https://en.wiktionary.org/wiki/not_my_circus,_not_my_monkeys
 ---
+
 Drawing a line around your responsibilities is universal, but what's inside the line varies: Polish has a whole circus, French a vegetable patch, German a drink. Each is something you'd tend yourself, and leave alone when it belongs to someone else.
